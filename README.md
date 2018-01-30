@@ -1,11 +1,15 @@
-# SSweb 丝袜库是公司常用基础库
-Sweb is a JS prototype or an extension library of its own
+# SSweb 丝袜库
+SSweb is a JS prototype or an extension library of its own
 
-SSweb (SW 被公司前端狗叫做丝袜库)是公司传统网页前端项目常用JS基础&工具库,由于使用频繁，前端早的小轮子
+SSweb (被前端狗称为丝袜库)用于公司传统网页前端项目常用JS基础&工具库,支持传统方式引入或AMD/CMD方式加载
 
-1、对于IE/6/7/8这种古董浏览器，丝袜库尝试检查并扩展ES5几个很常用原生方法
+造轮子的目的或目标：传统网页前端项目需要考虑N多兼容问题，使用频繁且繁琐，几代前端早的小轮子,经过N个项目不断修正迭代的JS原型或其SSweb自身的扩展库
+
+1、对于IE/6/7/8这种古董浏览器，丝袜库尝试检查并扩展ES5几个很常用原生方法（支持动态扩展定义或关闭）
 
 (trimLeft/trimRight/forEach/map/some/every/filter/indexOf/lastIndexOf/JSON)
+
+引入或AMD/CMD加载时，文件后缀增加查询参数即可关闭原生扩展, 如 ../ssweb.min.js?prototypeExtend=0
 
 2、实现了类似JQ的扩展插件机制（SSweb.extend/SSweb.fn.extend）
 
