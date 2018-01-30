@@ -3,8 +3,18 @@
  * SSweb is a JS prototype or an extension library of its own.
  * @version 1.5.1 01/19/2018
  * @author ygzhang.cn@msn.com
- * @link 24vote.cn
+ * @link https://github.com/ygzhang-cn/SSweb
  * @copyright 2015-2018 Kunming Dongring Technology Co., Ltd.
+ * -----------------------------------------------------
+ * SSweb (被前端狗称为丝袜库)用于公司传统网页前端项目常用JS基础&工具库,支持传统方式引入或AMD/CMD方式加载
+ * 
+ * 造轮子的目的或目标：传统网页前端项目需要考虑N多兼容问题，使用频繁且繁琐，几代前端早的小轮子,经过N个项目不断修正迭代的JS原型或其SSweb自身的扩展库
+ * 1、对于IE/6/7/8这种古董浏览器，丝袜库尝试检查并扩展ES5几个很常用原生方法（支持动态扩展定义或关闭）
+ * 
+ * (trimLeft/trimRight/forEach/map/some/every/filter/indexOf/lastIndexOf/JSON)
+ * 引入或AMD/CMD加载时，文件后缀增加查询参数即可关闭原生扩展, 如 ../ssweb.min.js?prototypeExtend=0
+ * 
+ * 2、实现了类似JQ的扩展插件机制（SSweb.extend/SSweb.fn.extend）
  */
 (function(window) {
     'use strict';
@@ -69,7 +79,7 @@
             for (i = 0; i < l; i++) {
                 var kv = src[i].split("=");
                 if (kv.length > 1 && typeof kv[0] == 'string' && _run_args.hasOwnProperty(kv[0])) {
-                    _run_args[kv[0]] = kv[1]==0 ? 0 :( kv[1]==1 ? 1 : kv[1]);
+                    _run_args[kv[0]] = kv[1] == 0 ? 0 : (kv[1] == 1 ? 1 : kv[1]);
                 }
             }
         }
@@ -575,19 +585,20 @@
             }
             return Array.isArray(v);
         },
-        inArray:function(_v,_array){
-            var v=_v,array;
+        inArray: function(_v, _array) {
+            var v = _v,
+                array;
             if (arguments.length > 1) {
                 array = _array;
             } else {
                 array = this.selector_obj;
             }
-            if(!this.isArray(v)){
+            if (!this.isArray(v)) {
                 return false;
             }
-            v.forEach(function(item){
+            v.forEach(function(item) {
                 console.log(item)
-                if(item===v){
+                if (item === v) {
                     return true;
                 }
             });
@@ -735,7 +746,7 @@
             return typeof v === 'string' ? v.replace(/(\s*$)/g, '') : '';
         },
         /*
-        仿PHP 删除数组中重复的元素 ,返回一个新数组
+        仿后端语言 删除数组中重复的元素 ,返回一个新数组
         */
         arrayUnique: function(array) {
             var res = [];
@@ -755,7 +766,7 @@
             return res;
         },
         /*
-        仿PHP 删除数组中指定的元素(如有多个全部移除),返回一个新数组
+        仿后端语言 删除数组中指定的元素(如有多个全部移除),返回一个新数组
         */
         arrayRemove: function(array, item) {
             if (!SSweb.isArray(array)) {
@@ -771,7 +782,7 @@
             }
             return newArr;
         },
-        //仿PHP删除数组中指定键对应某个元素,返回一个新数组
+        //仿后端语言删除数组中指定键对应某个元素,返回一个新数组
         arrayUnset: function(array, index) {
             if (!SSweb.isArray(array)) {
                 return [];
@@ -794,7 +805,7 @@
             }
             return newArr;
         },
-        //Fload 转换百分数并保留两位小数
+        //Float 转换百分数并保留两位小数
         toPercent: function(v) {
             if (!this.isNumber(v))
                 return '0.00%';
@@ -926,7 +937,7 @@
             return format;
         },
         urlGetParam: function(_name, _url) {
-            var name = typeof _name=== 'string' ? this.trim(_name) : false,
+            var name = typeof _name === 'string' ? this.trim(_name) : false,
                 url = typeof _url === 'string' ? this.trim(_url) : window.location.href;
             if (url == '' || !name) {
                 return '';
