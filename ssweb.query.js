@@ -18,7 +18,7 @@
  *
  * Date: @DATE
  */
-(function(window, SSweb) {
+(function(window, sw) {
 
     var i,
         support,
@@ -2256,7 +2256,7 @@
     }
 
     // EXPOSE
-    var _sizzle = window.Sizzle;
+    var _sizzle = window.Sizzle||null;
 
     Sizzle.noConflict = function() {
         if (window.Sizzle === Sizzle) {
@@ -2268,9 +2268,7 @@
 
     sw.query = Sizzle;
 })(window, SSweb);
-
-+
-(function(window, SSweb) {
+(function(window, sw) {
     var _run_data = {},
         _runDataID = function(el) {
             var s = sw.isDomElement(el) && el != document ? sw(el) : sw('body'),
@@ -2592,22 +2590,23 @@
         },
         attr: function(n, v) {
             n = sw.trim(n);
+            //注意这里附加_,避免JS压缩工具后引起关键字冲突问题
             var ieFix = {
-                'tabindex': 'tabIndex',
-                'readonly': 'readOnly',
-                'for': 'htmlFor',
-                'class': 'className',
-                'maxlength': 'maxLength',
-                'cellspacing': 'cellSpacing',
-                'cellpadding': 'cellPadding',
-                'rowspan': 'rowSpan',
-                'colspan': 'colSpan',
-                'usemap': 'useMap',
-                'frameborder': 'frameBorder',
-                'contenteditable': 'contentEditable'
+                '_tabindex': 'tabIndex',
+                '_readonly': 'readOnly',
+                '_for': 'htmlFor',
+                '_class': 'className',
+                '_maxlength': 'maxLength',
+                '_cellspacing': 'cellSpacing',
+                '_cellpadding': 'cellPadding',
+                '_rowspan': 'rowSpan',
+                '_colspan': 'colSpan',
+                '_usemap': 'useMap',
+                '_frameborder': 'frameBorder',
+                '_contenteditable': 'contentEditable'
             };
-            if ((sw.client.browser.isIE6 || sw.client.browser.isIE7) && ieFix[n]) {
-                n = ieFix[n];
+            if ((sw.client.browser.isIE6 || sw.client.browser.isIE7) && ieFix['_'+n]) {
+                n = ieFix['_'+n];
             }
             var t = sw.type(v);
             if (v === null) { //删除                
