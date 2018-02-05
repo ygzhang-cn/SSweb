@@ -13,9 +13,9 @@ SSweb (被前端狗称为丝袜库)用于公司传统网页前端项目常用JS�
 
 2、实现了类似JQ的扩展插件机制（SSweb.extend/SSweb.fn.extend）
 
-## 内置核心方法(baseMethod)
+## 内置常用工具方法(helpsMethod)
 
-支持 sw(obj).function([parms]) 或 sw.function([parms]) 快捷调用
+trim/trimLeft/trimRight
 
 isUndefined/isFloat/isNaN/isNumber/isString/isArray
 
@@ -23,11 +23,11 @@ toInt/toFloat
 
 isFunction/isCallFunction/inArray/isTrue/isEmpty/isObject/isEmptyObject/isPlainObject/isjQueryObject/isWindow/isDocument/isDomElement
 
+uuid 获取自增序列识别码，可选参数l是否补零长度，可选参数p为附加前缀
 
-## 内置常用工具方法(helpsMethod)
-支持 sw.function([parms]) 快捷调用
+type 获取对象类型
 
-trim/trimLeft/trimRight
+merge 合并数组对象
 
 arrayUnique  仿后端语言 删除数组中重复的元素 ,返回一个新数组
 
@@ -81,3 +81,12 @@ sw.storage.get(key)
 sw.storage.rm(key)
 
 sw.storage.clear()
+
+
+
+## ssweb.query扩展  常用DOM操作
+
+Query扩展使用JQ Sizzle 选择器开源库，实现了基本的DOM操作(Attr/Data/Find/Hide/Html/Text/Style/Show/slideUp/slideDown/Event On/Off)
+
+sw([DomElement|QuerySelector]).function([parms]) 或 sw.function([parms]) 常用DOM操作
+
