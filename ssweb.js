@@ -34,7 +34,7 @@
             '[object String]': 'string'
         },
         _run_args = {
-            debug: 1,
+            debug: 0,
             prototypeExtend: 1
         };
     var SSweb = sw;
