@@ -15,6 +15,8 @@ SSweb (被前端狗称为丝袜库)用于公司传统网页前端项目常用JS�
 
 ## 内置常用工具方法(helpsMethod)
 
+domReady
+
 trim/trimLeft/trimRight
 
 isUndefined/isFloat/isNaN/isNumber/isString/isArray
