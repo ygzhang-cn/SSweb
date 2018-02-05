@@ -836,7 +836,7 @@
             }
             return false;
         },
-        //isPlainObject 方法暂没有完美方式
+        //是否是一个纯粹的对象 方法暂没有完美方式
         isPlainObject: function(v) {
             if (Object.prototype.toString.call(v) === '[object Object]' && v.constructor === Object && !hasOwnProperty.call(v, 'constructor')) {
                 var key;
@@ -845,18 +845,28 @@
             }
             return false;
         },
-        isjQueryObject: function(v) {
+        //是否是SSweb对象
+        isSSweb:function(v){
+            if (typeof SSweb === 'undefined') {
+                return false;
+            } else {
+                return !!(v && v instanceof SSweb);
+            }
+        },
+        //是否是jQuery对象
+        isjQuery: function(v) {
             if (typeof jQuery === 'undefined') {
                 return false;
             } else {
-                return !!(v && v instanceof jQuery);
+                return !!(v && jQuery && v instanceof jQuery);
             }
         },
-        isZeptoObject: function(v) {
+        //是否是Zepto对象
+        isZepto: function(v) {
             if (typeof Zepto === 'undefined') {
                 return false;
             } else {
-                return !!(v && v instanceof Zepto);
+                return !!(v && Zepto && v instanceof Zepto);
             }
         },
         isWindow: function(v) {

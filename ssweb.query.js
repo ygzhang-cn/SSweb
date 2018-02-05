@@ -1,3 +1,13 @@
+/*! 
+ * SSweb Query扩展
+ * 使用JQ Sizzle 选择器开源库，实现了基本的DOM操作
+ * @version 1.0.1 02/02/2018
+ * @author ygzhang.cn@msn.com/437654450@qq.com/97572655@qq.com ....
+ * @link https://github.com/ygzhang-cn/SSweb
+ * @copyright 2015-2018 Kunming Dongring Technology Co., Ltd.
+ * -----------------------------------------------------
+ * SSweb (被前端狗称为丝袜库)用于公司传统网页前端项目常用JS基础&工具库,支持传统方式引入或AMD/CMD方式加载
+ */
 /*!
  * Sizzle CSS Selector Engine v@VERSION
  * https://sizzlejs.com/
@@ -2259,14 +2269,15 @@
     sw.query = Sizzle;
 })(window, SSweb);
 
-+(function(window, SSweb) {
++
+(function(window, SSweb) {
     var _run_data = {},
         _runDataID = function(el) {
             var s = sw.isDomElement(el) && el != document ? sw(el) : sw('body'),
-                id = s.attr('_sw_id');
+                id = s.attr('data-swid');
             if (!sw.isNumber(id)) {
                 id = sw.uuid();
-                s.attr('_sw_id', id);
+                s.attr('data-swid', id);
             }
             return parseInt(id);
         },
@@ -2309,9 +2320,8 @@
             } else {
                 delete _run_data[id];
             }
-        }
-
-
+        };
+    var _formDomType = '+|hidden|button|submit|reset|text|textarea|checkbox|radio|password|image|search|number|tel|url|date|time|datetime|datetime-local|month|week|email|color|range|';
     sw.fn.extend({
         eq: function(index) {
             if (sw.isDomElement(this)) {
@@ -2333,11 +2343,19 @@
         },
         parent: function() {
             if (sw.isDomElement(this)) {
-                return sw(this.parentNode);
+                return sw(this.parentNode || document);
             } else if (this.length > 0) {
                 return sw(this[0] ? this[0].parentNode : document);
             }
-            return this.context || document;
+            return sw(this.context || document);
+        },
+        parentElement: function() {
+            if (sw.isDomElement(this)) {
+                return this.parentNode || document;
+            } else if (this.length > 0) {
+                return this[0].parentNode || document;
+            }
+            return sw.isDomElement(this.context) ? this.context : document;
         },
         first: function() {
             if (this.length > 0) {
@@ -2373,7 +2391,7 @@
             if (v === void 0 || v === null) {
                 return this;
             }
-            return sw(v, (this.length > 0 ? this.toArray() : document));
+            return sw(sw.query.matches(v, this.toArray()), this.toArray());
         },
         siblings: function(v) {
             if (this.length > 0) {
@@ -2550,7 +2568,6 @@
         },
         off: function(e, fn) {
             e = sw.trim(e).split(' ');
-
             if (this.length > 0 && e !== '' && e !== null) {
                 var fns;
                 this.each(function(s) {
@@ -2646,11 +2663,33 @@
                 return this.attr(n) || _runDataGet(this.eqElement(0), 'data', n) || null;
             }
         },
+        remove: function() {
+            if (this.length > 0) {
+                this.each(function(v) {
+                    //首先移除Dom上缓存的数据
+                    _runDataRm(v);
+                    sw.query('[data-swid]', v).forEach(function(s) {
+                        _runDataRm(s)
+                    });
+                    if (v.parentNode) {
+                        v.parentNode.removeChild(v);
+                    }
+                });
+            }
+            return this;
+        },
         text: function(v) {
-            if (typeof v == 'string' && v != '') {
+            if (typeof v == 'string') {
                 if (this.length > 0) {
                     var el = this.eqElement(0);
-                    if (el.textContent) {
+                    if (sw.isEmpty(v)) {
+                        //首先移除Dom上缓存的数据
+                        _runDataRm(el);
+                        sw.query('[data-swid]', el).forEach(function(s) {
+                            _runDataRm(s)
+                        });
+                        el.innerHTML = '';
+                    } else if (el.textContent) {
                         el.textContent = v
                     } else if (el.innerText) {
                         el.innerText = v
@@ -2670,7 +2709,16 @@
                 if (this.length > 0) {
                     var el = this.eqElement(0);
                     if (el.innerHTML) {
-                        el.innerHTML = v
+                        if (sw.isEmpty(v)) {
+                            //首先移除Dom上缓存的数据
+                            _runDataRm(el);
+                            sw.query('[data-swid]', el).forEach(function(s) {
+                                _runDataRm(s)
+                            });
+                            el.innerHTML = '';
+                        } else {
+                            el.innerHTML = v
+                        }
                     }
                 }
                 return this;
@@ -2686,6 +2734,11 @@
             if (this.length > 0) {
                 var el = this.eqElement(0);
                 if (el.innerHTML) {
+                    //首先移除Dom上缓存的数据
+                    _runDataRm(el);
+                    sw.query('[data-swid]', el).forEach(function(s) {
+                        _runDataRm(s)
+                    });
                     el.innerHTML = '';
                 }
             }
@@ -2700,7 +2753,7 @@
             }
             return this;
         },
-        prepend: function(newElem) {
+        prepend: function(v) {
             if (this.length > 0 && typeof v == 'string') {
                 var el = this.eqElement(0);
                 if (el.innerHTML) {
@@ -2709,7 +2762,7 @@
             }
             return this;
         },
-        after: function(newElem) {
+        after: function(v) {
             if (this.length > 0 && typeof v == 'string') {
                 var el = this.eqElement(0);
                 if (el.outerHTML) {
@@ -2718,7 +2771,7 @@
             }
             return this;
         },
-        before: function(newElem) {
+        before: function(v) {
             if (this.length > 0 && typeof v == 'string') {
                 var el = this.eqElement(0);
                 if (el.outerHTML) {
@@ -2735,6 +2788,51 @@
                 }
             }
             return this;
+        },
+        val: function(v) {
+            if (typeof v == 'string' || typeof v == 'number' || typeof v == 'boolean') {
+                if (this.length > 0) {
+                    var el = this.eqElement(0);
+                    if (_formDomType.indexOf('|' + (el.type || '') + '|')) {
+                        if (el.value) {
+                            el.value = v
+                        } else if (el.innerHTML) {
+                            el.innerHTML = v
+                        }
+                    }
+                }
+                return this;
+            } else {
+                if (this.length > 0) {
+                    var el = this.eqElement(0);
+                    if (_formDomType.indexOf('|' + (el.type || '') + '|')) {
+                        return el.value || el.innerHTML || null;
+                    }
+                }
+                return null;
+            }
+        },
+        checked: function(v) {
+            if (typeof v == 'string' || typeof v == 'number' || typeof v == 'boolean') {
+                if (this.length > 0) {
+                    var el = this.eqElement(0);
+                    if (('+|checkbox|radio|').indexOf('|' + (el.type || '') + '|')) {
+                        el.checked = v ? 'checked' : false;
+                    }
+                }
+                return this;
+            } else {
+                if (this.length > 0) {
+                    var el = this.eqElement(0);
+                    if (('+|checkbox|radio|').indexOf('|' + (el.type || '') + '|')) {
+                        if (el.checked && (el.checked == 'checked' || el.checked == 'true' || el.checked == true)) {
+                            return true;
+                        }
+                        return false;
+                    }
+                }
+                return false;
+            }
         },
         slideDown: function(s, fn) {
             if (this.length > 0) {
