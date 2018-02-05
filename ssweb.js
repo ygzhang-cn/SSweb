@@ -8,7 +8,7 @@
  * -----------------------------------------------------
  * SSweb (被前端狗称为丝袜库)用于公司传统网页前端项目常用JS基础&工具库,支持传统方式引入或AMD/CMD方式加载
  * 
- * 造轮子的目的或目标：传统网页前端项目需要考虑N多兼容问题，使用频繁且繁琐，几代前端早的小轮子,经过N个项目不断修正迭代的JS原型或其SSweb自身的扩展库
+ * 造轮子的目的或目标：传统网页前端项目需要考虑N多兼容问题，使用频繁且繁琐，几代前端早的小轮子,经过N个项目不断修正迭代的JS原型或其sw自身的扩展库
  * 1、对于IE/6/7/8这种古董浏览器，丝袜库尝试检查并扩展ES5几个很常用原生方法（支持动态扩展定义或关闭）
  * 
  * (trimLeft/trimRight/forEach/map/some/every/filter/indexOf/lastIndexOf/JSON)
@@ -19,10 +19,10 @@
 (function(window) {
     'use strict';
     window.console = window.console || { log: function() {}, debug: function() {}, info: function() {}, warn: function() {}, error: function() {} };
-    var _SSweb = window.SSweb || {},
-        SSweb = function(obj) {
-            return new SSweb.fn.instance((obj !== void 0 ? obj : undefined));
-        },
+    var sw = function(selector, context) {
+            return new sw.fn.instance(selector, context);
+        },     
+        _uuid = 0,
         _obj_types = {
             '[object Array]': 'array',
             '[object Boolean]': 'boolean',
@@ -34,16 +34,17 @@
             '[object String]': 'string'
         },
         _run_args = {
-            debug: 0,
+            debug: 1,
             prototypeExtend: 1
         };
+    var SSweb = sw;
     /*
      * 取得正在解析的Script SRC , 参考 司徒正美 方法实现
      * @link https://www.cnblogs.com/rubylouvre/archive/2013/01/23/2872618.html
      */
-    SSweb.currentScript = function(_window, _document) {
+    sw.currentScript = function(_window, _document) {
         var Win = _window || window;
-        var Dom = _document || document;
+        var Dom = _document || document || window.document;
         if (Dom.currentScript) { //firefox 4+
             return Dom.currentScript.src;
         }
@@ -71,7 +72,7 @@
     };
 
     (function() {
-        var src = SSweb.currentScript();
+        var src = sw.currentScript();
         if (typeof src == 'string' && src.indexOf("?") > 0 && src.indexOf("=")) {
             src = src.substr(src.indexOf("?") + 1).split("&");
             var kv, i, l = src.length,
@@ -84,7 +85,7 @@
             }
         }
     })();
-    _run_args.debug && console.info('SSweb Runing Args:');
+    _run_args.debug && console.info('sw Runing Args:');
     _run_args.debug && console.info(_run_args)
 
     /*
@@ -124,7 +125,7 @@
         */
         if (!Array.prototype.forEach) {
             console.info('SSweb Extend: Array.prototype.forEach');
-            Array.prototype.forEach = function(callback /*function(currentValue[, index[, array]){}[,thisArg]*/ ) {
+            Array.prototype.forEach = function(callback /*function(currentValue[, index[, array]){}*/ , thisArg) {
                 var T, k;
                 if (this == null) {
                     throw new TypeError('this is null or not defined');
@@ -154,7 +155,7 @@
         */
         if (!Array.prototype.map) {
             console.info('SSweb Extend: Array.prototype.map');
-            Array.prototype.map = function(callback /*function(currentValue[, index[, array]){}[,thisArg]*/ ) {
+            Array.prototype.map = function(callback /*function(currentValue[, index[, array]){}*/ , thisArg) {
                 var T, A, k;
                 if (this == null) {
                     throw new TypeError('this is null or not defined');
@@ -187,7 +188,7 @@
         */
         if (!Array.prototype.some) {
             console.info('SSweb Extend: Array.prototype.some');
-            Array.prototype.some = function(callback /*function(currentValue[, index[, array]){}[,thisArg]*/ ) {
+            Array.prototype.some = function(callback /*function(currentValue[, index[, array]){}*/ , thisArg) {
 
                 if (this == null) {
                     throw new TypeError('Array.prototype.some called on null or undefined');
@@ -213,7 +214,7 @@
         */
         if (!Array.prototype.every) {
             console.info('SSweb Extend: Array.prototype.every');
-            Array.prototype.every = function(callback /*function(currentValue[, index[, array]){}[,thisArg]*/ ) {
+            Array.prototype.every = function(callback /*function(currentValue[, index[, array]){}*/ , thisArg) {
                 var T, k;
                 if (this == null) {
                     throw new TypeError('this is null or not defined');
@@ -247,7 +248,7 @@
         */
         if (!Array.prototype.filter) {
             console.info('SSweb Extend: Array.prototype.filter');
-            Array.prototype.filter = function(callback /*function(currentValue[, index[, array]){}[,thisArg]*/ ) {
+            Array.prototype.filter = function(callback /*function(currentValue[, index[, array]){}*/ , thisArg) {
                 if (!(typeof callback === 'function' && this))
                     throw new TypeError();
                 var len = this.length >>> 0,
@@ -346,6 +347,94 @@
                 }
                 return -1;
             };
+        }
+        if (typeof Object.create !== "function") {
+            console.info('SSweb Extend: Object.create');
+            Object.create = function(proto, propertiesObject) {
+                if (typeof proto !== 'object' && typeof proto !== 'function') {
+                    throw new TypeError('Object prototype may only be an Object: ' + proto);
+                } else if (proto === null) {
+                    throw new Error("This browser's implementation of Object.create is a shim and doesn't support 'null' as the first argument.");
+                }
+
+                if (typeof propertiesObject != 'undefined') throw new Error("This browser's implementation of Object.create is a shim and doesn't support a second argument.");
+
+                function F() {}
+                F.prototype = proto;
+
+                return new F();
+            };
+        }
+        (function() {
+            if (!Object.defineProperty ||
+                !(function() { try { Object.defineProperty({}, 'x', {}); return true; } catch (e) { return false; } }())) {
+                console.info('SSweb Extend: Object.defineProperty');
+                var orig = Object.defineProperty;
+                Object.defineProperty = function(o, prop, desc) {
+                    // In IE8 try built-in implementation for defining properties on DOM prototypes.
+                    if (orig) { try { return orig(o, prop, desc); } catch (e) {} }
+                    if (o !== Object(o)) { throw TypeError("Object.defineProperty called on non-object"); }
+                    if (Object.prototype.__defineGetter__ && ('get' in desc)) {
+                        Object.prototype.__defineGetter__.call(o, prop, desc.get);
+                    }
+                    if (Object.prototype.__defineSetter__ && ('set' in desc)) {
+                        Object.prototype.__defineSetter__.call(o, prop, desc.set);
+                    }
+                    if ('value' in desc) {
+                        o[prop] = desc.value;
+                    }
+                    return o;
+                };
+            }
+        }());
+        //IE9和IE9以前的版本不支持classList
+        if (!("classList" in document.documentElement)) {
+            window.HTMLElement = window.HTMLElement || window.Element || false;
+            if (!window.HTMLElement) {
+                console.warn('SSweb Tips: Your browser does not support window Object HTMLElement OR Element');
+            } else {
+                console.info('SSweb Extend: documentElement.classList');
+                Object.defineProperty(window.HTMLElement.prototype, 'classList', {
+                    get: function() {
+                        var self = this;
+
+                        function update(fn) {
+                            return function(value) {
+                                var classes = self.className.split(/\s+/g),
+                                    index = classes.indexOf(value);
+
+                                fn(classes, index, value);
+                                self.className = classes.join(" ");
+                            }
+                        }
+
+                        return {
+                            add: update(function(classes, index, value) {
+                                if (!~index) classes.push(value);
+                            }),
+
+                            remove: update(function(classes, index) {
+                                if (~index) classes.splice(index, 1);
+                            }),
+
+                            toggle: update(function(classes, index, value) {
+                                if (~index)
+                                    classes.splice(index, 1);
+                                else
+                                    classes.push(value);
+                            }),
+
+                            contains: function(value) {
+                                return !!~self.className.split(/\s+/g).indexOf(value);
+                            },
+
+                            item: function(i) {
+                                return self.className.split(/\s+/g)[i] || null;
+                            }
+                        };
+                    }
+                });
+            }
         }
         /*
          * https://github.com/douglascrockford/JSON-js/blob/master/json2.js
@@ -448,27 +537,52 @@
 
         }
     }
-    SSweb.fn = SSweb.prototype = {
+    sw.fn = sw.prototype = {
         SSweb: '1.0.3',
         constructor: SSweb,
-        selector_type: undefined,
-        selector_obj: undefined,
-        instance: function(_that) {
-            if (_that !== void 0) {
-                this.selector_obj = _that;
-                this.selector_type = SSweb.objectType(_that);
+        instance: function(selector, context) {
+            selector = selector || undefined;
+            context = context || document; //设置默认值为document
+            if (selector && selector.nodeType) { //如果选择符为节点对象
+                this[0] = selector; //把参数节点传递给实例对象的数组
+                this.length = 1; //并设置实例对象的length属性，定义包含的元素个数
+                this.context = selector.parentNode || context; //设置实例的属性，返回选择范围
+                return this; //返回当前实例
             }
-            //SSweb.log('SSweb.selector_obj:'+this.selector_obj);
-            //SSweb.log('SSweb.selector_type:'+this.selector_type);
-            return this;
+            this.selector = selector;
+            this.context = context;
+            this.length = 0;
+            var type = sw.type(selector);
+            if (type == 'function') {
+                sw.domReady(selector);
+            } else if (type == 'array') {
+                for (var i = 0; i < selector.length; i++) { //遍历元素集合，并把所有元素填入到当前实例数组中
+                    if (sw.isDomElement(selector[i])) {
+                        this[i] = selector[i];
+                        this.length++;
+                    }
+                }
+            } else if (type === "string") { //如果选择符是字符串
+                if(sw.query){
+                    var e = sw.query(selector, context);
+                    //获取指定名称的元素
+                    for (var i = 0; i < e.length; i++) { //遍历元素集合，并把所有元素填入到当前实例数组中
+                        this[i] = e[i];
+                    }
+                    this.length = e.length; //设置实例的length属性，即定义包含的元素个数  
+                }else{
+                    console.warn('SSweb query not loaded')
+                }          
+            }
+            return this; //返回当前实例
         },
-        length: 0,
+        size: function() { return this.length;},
         toArray: function() {
             return Array.prototype.slice.call(this);
         }
     };
-    SSweb.fn.instance.prototype = SSweb.fn;
-    SSweb.extend = SSweb.fn.extend = function() {
+    sw.fn.instance.prototype = sw.fn;
+    sw.extend = sw.fn.extend = function() {
         var options, name, src, copy, copyIsArray, clone,
             target = arguments[0] || {},
             i = 1,
@@ -484,12 +598,10 @@
             i = 2;
         }
         // Handle case when target is a string or something (possible in deep copy)
-        if (typeof target !== 'object' && !SSweb.isFunction(target)) {
+        if (typeof target !== 'object' && !sw.isFunction(target)) {
             target = {};
         }
-        // extend jQuery itself if only one argument is passed
         if (length === i) {
-            //$('#id').extend(dest)的时候
             target = this;
             --i;
         }
@@ -508,17 +620,17 @@
                         continue;
                     }
                     // Recurse if we're merging plain objects or arrays
-                    if (deep && copy && (SSweb.isPlainObject(copy) || (copyIsArray = SSweb.isArray(copy)))) {
+                    if (deep && copy && (sw.isPlainObject(copy) || (copyIsArray = sw.isArray(copy)))) {
                         //如果是深复制
                         if (copyIsArray) {
                             copyIsArray = false; //这句话我认为是多余的。
                             //克隆原来target上的原属性
-                            clone = src && SSweb.isArray(src) ? src : [];
+                            clone = src && sw.isArray(src) ? src : [];
                         } else {
-                            clone = src && SSweb.isPlainObject(src) ? src : {};
+                            clone = src && sw.isPlainObject(src) ? src : {};
                         }
                         //递归深复制
-                        target[name] = SSweb.extend(deep, clone, copy);
+                        target[name] = sw.extend(deep, clone, copy);
                         //undefined的属性对时不会复制到target上的
                     } else if (copy !== undefined) {
                         target[name] = copy;
@@ -529,83 +641,130 @@
         // Return the modified object
         return target;
     };
-    //核心方法属性定义
-    var baseMethod = {
-        selector_type: SSweb.selector_type,
-        selector_obj: SSweb.selector_obj,
-        objectType: function(_v) {
-            var v = _v !== void 0 ? _v : this.selector_obj;
+    //常用工具函数定义
+    var helpsMethod = {
+        //获取自增序列识别码，可选参数l是否补零长度，可选参数p为附加前缀
+        uuid: function(l, p) {
+            p = this.type(p) == 'string' ? this.trim(p) : 0;
+            if (this.isNumber(l) && parseInt(l) > 0) {
+                l = parseInt(l);
+                return p + (Array(l).join('0') + (++_uuid)).slice(-l);
+            } else {
+                return p + (++_uuid);
+            }
+        },
+        log: function(v) {
+            window.console.log(v);
+        },
+        type: function(v) {
             if (v === null) {
                 return v + '';
             }
             return typeof v === 'object' || typeof v === 'function' ? _obj_types[Object.prototype.toString.call(v)] || 'object' : typeof v;
         },
-        log: function(_v) {
-            var v = _v !== void 0 ? _v : this.selector_obj;
-            window.console.log(v);
+        merge: function(first, second) {
+            var len = +second.length,
+                j = 0,
+                i = first.length;
+            while (j < len) {
+                first[i++] = second[j++];
+            }
+            if (len !== len) {
+                while (second[j] !== undefined) {
+                    first[i++] = second[j++];
+                }
+            }
+            first.length = i;
+            return first;
         },
-        isUndefined: function(_v) {
-            var v = _v !== void 0 ? _v : this.selector_obj;
+        //普通字符串与驼峰命名风格转换
+        nameStyle: function(v, t, f) {
+            if (typeof v != 'string') {
+                return '';
+            }
+            if (t) { //将字符串(下划线或中划线链接)转换为大小写风格的驼峰命名字符串（已存在大写字母不做处理）
+                var a = v.trim().split(/[\_\-]+/);
+                return a.map(function(_v, _i) {
+                    if (_i == 0) {
+                        //是否附加第一个字母大写风格(通过第三个参数f指定，bool OR 0,1)
+                        if (f) _v = _v.slice(0, 1).toUpperCase() + _v.slice(1);
+                    } else {
+                        _v = _v.slice(0, 1).toUpperCase() + _v.slice(1);
+                    }
+                    return _v;
+                }).join('');
+            } else {
+                //将驼峰命名字符串转换为全小写普通字符串(下划线或中划线链接，通过第三个参数f指定，默认-)
+                //用于变量 f指定为下划线 _
+                //用于dom节点idName或className f指定为中划线 -
+                var j = typeof f == 'string' ? f : '-';
+                var a = v.trim().replace(/([A-Z])/g, j + "$1").toLowerCase().split(j);
+                return a.filter(function(_v) {
+                    if (sw.isEmpty(_v)) {
+                        return false;
+                    }
+                    return true;
+                }).join(j);
+            }
+        },
+        trim: function(v) {
+            return typeof v === 'string' ? v.replace(/(^\s*)|(\s*$)/g, '') : '';
+        },
+        trimLeft: function(v) {
+            return typeof v === 'string' ? v.replace(/(^\s*)/g, '') : '';
+        },
+        trimRight: function(v) {
+            return typeof v === 'string' ? v.replace(/(\s*$)/g, '') : '';
+        },
+        isUndefined: function(v) {
             return v === void 0 || typeof v === 'undefined';
         },
-        isInt: function(_v) {
-            var v = _v !== void 0 ? _v : this.selector_obj,
-                reg = /^(-|\+)?\d+$/;
+        isInt: function(v) {
+            var reg = /^(-|\+)?\d+$/;
             return reg.test(v);
         },
         isFloat: function(_v) {
-            var v = _v !== void 0 ? _v : this.selector_obj,
-                reg = /^(-|\+)?\d+\.\d*$/;
+            var reg = /^(-|\+)?\d+\.\d*$/;
             return reg.test(v);
         },
-        isNaN: function(_v) {
-            var v = _v !== void 0 ? _v : this.selector_obj;
+        isNaN: function(v) {
             return v == null || !/\d/.test(v) || isNaN(v);
         },
-        isNumber: function(_v) {
-            var v = _v !== void 0 ? _v : this.selector_obj;
+        isNumber: function(v) {
             return v != null && /\d/.test(v) && !isNaN(v);
         },
-        toInt: function(_v) {
-            var v = _v !== void 0 ? _v : this.selector_obj;
+        toInt: function(v) {
             return (parseInt(v) || 0);
         },
-        toFloat: function(_v) {
-            var v = _v !== void 0 ? _v : this.selector_obj;
+        toFloat: function(v) {
             return (parseFloat(v) || 0).toFixed(2);
         },
-        isString: function(_v) {
-            var v = _v !== void 0 ? _v : this.selector_obj;
+        isString: function(v) {
             return typeof v === 'string';
         },
-        isArray: function(_v) {
-            var v = _v !== void 0 ? _v : this.selector_obj;
+        isArray: function(v) {
             if (!Array.prototype.isArray) {
                 return '[object Array]' === Object.prototype.toString.call(v);
             }
             return Array.isArray(v);
         },
-        inArray: function(_v, _array) {
-            var v = _v,
-                array;
-            if (arguments.length > 1) {
-                array = _array;
-            } else {
-                array = this.selector_obj;
-            }
-            if (!this.isArray(v)) {
+        inArray: function(v, array, strict) {
+            if (!this.isArray(array)) {
                 return false;
             }
-            v.forEach(function(item) {
-                console.log(item)
-                if (item === v) {
-                    return true;
+            strict = strict !== void 0 ? (strict ? 1 : 0) : 1;
+            array.forEach(function(item) {
+                if (strict) {
+                    if (item === v)
+                        return true;
+                } else {
+                    if (item == v)
+                        return true;
                 }
             });
             return false;
         },
-        isFunction: function(_v) {
-            var v = _v !== void 0 ? _v : this.selector_obj;
+        isFunction: function(v) {
             if ('object' === typeof document.getElementById) {
                 try {
                     return /^\s*\bfunction\b/.test('' + v);
@@ -617,21 +776,7 @@
             }
         },
         //检测目标是否是可回调函数(字符串或函数名)，并返回结果函数自身
-        isCallFunction: function(_v, _obj) {
-            var v, obj = window;
-            if (arguments.length >= 2) {
-                v = _v;
-                obj = _obj;
-            } else if (arguments.length == 1) {
-                if (this.selector_obj) {
-                    v = this.selector_obj;
-                    obj = _v;
-                } else {
-                    v = _v;
-                }
-            } else {
-                v = this.selector_obj;
-            }
+        isCallFunction: function(v, obj) {
             if (!this.isObject(obj)) {
                 obj = window;
             }
@@ -646,8 +791,7 @@
             }
             return false;
         },
-        isTrue: function(_v) {
-            var v = _v !== void 0 ? _v : this.selector_obj;
+        isTrue: function(v) {
             if (typeof v === 'undefined' || typeof v === 'null') {
                 return false;
             }
@@ -667,8 +811,7 @@
             }
             return true;
         },
-        isEmpty: function(_v) {
-            var v = _v !== void 0 ? _v : this.selector_obj;
+        isEmpty: function(v) {
             if (v === null || typeof v == 'undefined')
                 return true;
             if (typeof v == 'string' && v.length < 1)
@@ -679,13 +822,11 @@
                 return true;
             return false;
         },
-        isObject: function(_v) {
-            var v = _v !== void 0 ? _v : this.selector_obj;
+        isObject: function(v) {
             var type = typeof v;
             return !!(v && type === 'function' || type === 'object');
         },
-        isEmptyObject: function(_v) {
-            var v = _v !== void 0 ? _v : this.selector_obj;
+        isEmptyObject: function(v) {
             if (this.isObject(v)) {
                 var i;
                 for (var i in v) {
@@ -696,8 +837,7 @@
             return false;
         },
         //isPlainObject 方法暂没有完美方式
-        isPlainObject: function(_v) {
-            var v = _v !== void 0 ? _v : this.selector_obj;
+        isPlainObject: function(v) {
             if (Object.prototype.toString.call(v) === '[object Object]' && v.constructor === Object && !hasOwnProperty.call(v, 'constructor')) {
                 var key;
                 for (key in v) {}
@@ -705,52 +845,39 @@
             }
             return false;
         },
-        isjQueryObject: function(_v) {
-            var v = _v !== void 0 ? _v : this.selector_obj;
+        isjQueryObject: function(v) {
             if (typeof jQuery === 'undefined') {
                 return false;
             } else {
                 return !!(v && v instanceof jQuery);
             }
         },
-        isWindow: function(_v) {
-            var v = _v !== void 0 ? _v : this.selector_obj;
+        isZeptoObject: function(v) {
+            if (typeof Zepto === 'undefined') {
+                return false;
+            } else {
+                return !!(v && v instanceof Zepto);
+            }
+        },
+        isWindow: function(v) {
             return v != null && v == v.window;
         },
-        isDocument: function(_v) {
-            var v = _v !== void 0 ? _v : this.selector_obj;
-            return v != null && v.nodeType == v.DOCUMENT_NODE;
+        isDocument: function(v) {
+            return v != null && typeof v.nodeType !== 'undefined' && typeof v.DOCUMENT_NODE !== 'undefined' && v.nodeType == v.DOCUMENT_NODE;
         },
-        isDomElement: function(_v) {
-            var v = _v !== void 0 ? _v : this.selector_obj;
+        isDomElement: function(v) {
             if (typeof HTMLElement === 'object') {
                 return !!(v && v instanceof HTMLElement);
             } else {
                 return !!(v && typeof v === 'object' && v.nodeType === 1 && typeof v.nodeName === 'string');
             }
-        }
-    };
-    //注入核心方法库
-    SSweb.extend(baseMethod);
-    SSweb.fn.extend(baseMethod);
-
-    //常用工具函数定义
-    var helpsMethod = {
-        trim: function(v) {
-            return typeof v === 'string' ? v.replace(/(^\s*)|(\s*$)/g, '') : '';
-        },
-        trimLeft: function(v) {
-            return typeof v === 'string' ? v.replace(/(^\s*)/g, '') : '';
-        },
-        trimRight: function(v) {
-            return typeof v === 'string' ? v.replace(/(\s*$)/g, '') : '';
         },
         /*
         仿后端语言 删除数组中重复的元素 ,返回一个新数组
         */
         arrayUnique: function(array) {
             var res = [];
-            if (SSweb.isArray(array)) {
+            if (sw.isArray(array)) {
                 if (array.length < 2) {
                     return [array[0]] || [];
                 }
@@ -769,7 +896,7 @@
         仿后端语言 删除数组中指定的元素(如有多个全部移除),返回一个新数组
         */
         arrayRemove: function(array, item) {
-            if (!SSweb.isArray(array)) {
+            if (!sw.isArray(array)) {
                 return [];
             }
             var i = 0,
@@ -784,10 +911,10 @@
         },
         //仿后端语言删除数组中指定键对应某个元素,返回一个新数组
         arrayUnset: function(array, index) {
-            if (!SSweb.isArray(array)) {
+            if (!sw.isArray(array)) {
                 return [];
             }
-            if (!SSweb.isNumber(index)) {
+            if (!sw.isNumber(index)) {
                 return array;
             }
             index = parseInt(index);
@@ -833,7 +960,7 @@
                 symbol = (typeof _symbol == 'string' || typeof _symbol !== 'undefined') ? _symbol : '￥',
                 thousand = (typeof _thousand == 'string' || typeof _thousand !== 'undefined') ? _thousand : ',',
                 negative = number < 0 ? '-' : '';
-            if (!SSweb.isNumber(number))
+            if (!sw.isNumber(number))
                 return places < 1 ? '0' : '0.' + (0).toFixed(places).slice(2);
             var i = parseInt(number = Math.abs(+number || 0).toFixed(places), 10) + '',
                 j = (j = i.length) > 3 ? j % 3 : 0;
@@ -845,10 +972,10 @@
          * obj=>{name:ygzhang,form:{a:1,b:2}}
          */
         replaceValueMatch: function(str, obj) {
-            if (SSweb.objectType(str) != 'string') {
+            if (sw.type(str) != 'string') {
                 return '';
             }
-            if (SSweb.objectType(obj) != 'object') {
+            if (sw.type(obj) != 'object') {
                 return str;
             }
             str = str.replace('%5B', '[').replace('%5D', ']');
@@ -888,7 +1015,7 @@
          * @return String
          */
         dateFormat: function(time, format) {
-            if (SSweb.isNumber(time)) {
+            if (sw.isNumber(time)) {
                 //JS时间戳为13位，包含3位毫秒的，而PHP只有10位不包含毫秒
                 if (time >= 1000000000 && time <= 9999999999) {
                     time = time * 1000;
@@ -1033,7 +1160,7 @@
 
         //产生固定长度的随机字符串  
         randomString: function(_length, _str) {
-            var length = SSweb.isNumber(_length) && parseInt(_length) || 16,
+            var length = sw.isNumber(_length) && parseInt(_length) || 16,
                 str = typeof _str === 'string' && _str || '';
             var arr = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'];
             if (str == 'alpha') {
@@ -1051,7 +1178,7 @@
         }
     };
     //注入常用工具方法库
-    SSweb.extend(helpsMethod);
+    sw.extend(helpsMethod);
 
     //客户端/浏览器信息获取
     var _getClient = function() {
@@ -1105,24 +1232,25 @@
         } else {
             device.pc = true;
         }
-
-
         var name, browser = {
             lang: (navigator.browserLanguage || navigator.language || '').toLowerCase(),
             version: 0,
             versionFull: '',
-            isIE: false,
-            isIE6: false,
-            isIE7: false,
-            isIE8: false,
-            isIE9: false,
-            isIE10: false,
-            isIE11: false,
-            isEdge: false,
-            isChrome: false,
-            isSafari: false,
-            isFirefox: false,
-            isOpera: false
+            isIE: 0,
+            isIE6: 0,
+            isIE7: 0,
+            isIE8: 0,
+            isIE9: 0,
+            isIE10: 0,
+            isIE11: 0,
+            isEdge: 0,
+            isChrome: 0,
+            isSafari: 0,
+            isFirefox: 0,
+            isOpera: 0,
+            isWebkit: 0,
+            versionWebkit: 0,
+            versionWebkitFull: ''
         };
         var s, is = {};
         (s = ua.match(/edge\/([\d.]+)/)) ? is.edge = s[1]:
@@ -1134,28 +1262,34 @@
             (s = ua.match(/version\/([\d.]+).*safari/)) ? is.safari = s[1] : 0;
 
         if (is.edge) {
-            browser.isEdge = true;
+            browser.isEdge = 1;
             browser.versionFull = is.edge;
         }
         if (is.ie) {
-            browser.isIE = true;
+            browser.isIE = 1;
             browser.versionFull = is.ie;
         }
         if (is.firefox) {
-            browser.isFirefox = true;
+            browser.isFirefox = 1;
             browser.versionFull = is.firefox;
         }
         if (is.chrome) {
-            browser.isChrome = true;
+            browser.isChrome = 1;
             browser.versionFull = is.chrome;
         }
         if (is.opera) {
-            browser.isOpera = true;
+            browser.isOpera = 1;
             browser.versionFull = is.opera;
         }
         if (is.safari) {
-            browser.isSafari = true;
+            browser.isSafari = 1;
             browser.versionFull = is.safari;
+        }
+        //Webkit及版本特殊测试
+        if ((s = ua.match(/applewebkit\/([\d.]+)/)) ? is.webkit = s[1] : 0) {
+            browser.isWebkit = 1;
+            browser.versionWebkit = parseInt(is.webkit, 10);
+            browser.versionWebkitFull = is.webkit;
         }
         if (browser.versionFull < 1) {
             browser.versionFull = navigator.appVersion || 0;
@@ -1177,6 +1311,50 @@
         };
     };
     var _client = _getClient();
+    /*
+     * 注册浏览器的DOMContentLoaded事件
+     * @param { Function } fn 在DOMContentLoaded事件触发时需要执行的函数
+     */
+    sw.domReady = function(fn) {
+        if (!sw.isFunction(fn)) {
+            return;
+        } else if (document.readyState == 'complete') {
+            fn();
+        } else if (document.addEventListener) {
+            document.addEventListener("DOMContentLoaded", fn, false);
+        } else {
+            var done = false,
+                // 只执行一次用户的回调函数init()
+                init = function() {
+                    if (!done) {
+                        done = true;
+                        fn();
+                    }
+                },
+                ready = function test() {
+                    if (done) return;
+                    try {
+                        // DOM树未创建完之前调用doScroll会抛出错误
+                        document.documentElement.doScroll('left');
+                    } catch (e) {
+                        //延迟再试一次~
+                        setTimeout(ready, 50);
+                        return;
+                    }
+                    // 没有错误就表示DOM树创建完毕，然后立马执行用户回调
+                    init();
+                };
+            ready();
+            //监听document的加载状态
+            document.onreadystatechange = function() {
+                // 如果用户是在domReady之后绑定的函数，就立马执行
+                if (document.readyState == 'complete') {
+                    document.onreadystatechange = null;
+                    init();
+                }
+            };
+        }
+    };
     //[ Cookies ] 扩展
     var _cookies = function(key, value, options) {
         if (arguments.length === 1) {
@@ -1212,16 +1390,16 @@
     };
     _cookies.config = function(k, v) {
         if (typeof k === 'object') {
-            _cookies.defaults = SSweb.extend(_cookies.defaults, k);
+            _cookies.defaults = sw.extend(_cookies.defaults, k);
         } else if (typeof k === 'string') {
-            _cookies.defaults[SSweb.trim(k)] = v === void 0 ? undefined : v;
+            _cookies.defaults[sw.trim(k)] = v === void 0 ? undefined : v;
         }
         _cookies._cacheKeyPrefix = _cookies.defaults.prefix;
         return _cookies;
     };
     _cookies.get = function(key) {
         if (typeof key !== 'string') {
-            console.info('SSweb cookies `key` must be a string');
+            console.info('sw cookies `key` must be a string');
             return false;
         }
         if (_cookies._cachedDocumentCookie !== _cookies._document.cookie) {
@@ -1235,7 +1413,7 @@
     };
     _cookies.set = function(key, value, _options) {
         if (typeof key !== 'string') {
-            console.info('SSweb cookies `key` must be a string');
+            console.info('sw cookies `key` must be a string');
             return false;
         }
         var options;
@@ -1246,19 +1424,19 @@
         }
         if (value === void 0) {
             value = '[=UNDEFINED]';
-        } else if (typeof value !== 'string' && !SSweb.isFunction(value)) {
+        } else if (typeof value !== 'string' && !sw.isFunction(value)) {
             try {
                 value = '[=JSON]' + JSON.stringify(value);
             } catch (e) {
                 if (!(value.toString || false)) {
                     value = value.toString()
                 } else {
-                    console.info('SSweb cookies `value` types does not support');
+                    console.info('sw cookies `value` types does not support');
                     return false;
                 }
             }
         } else {
-            console.info('SSweb cookies `value` types does not support');
+            console.info('sw cookies `value` types does not support');
             return false;
         }
 
@@ -1293,7 +1471,7 @@
             expires = undefined;
         }
         if (expires && !_cookies._isValidDate(expires)) {
-            throw new Error('SSweb cookies `expires` cannot be converted to a valid Date instance');
+            throw new Error('sw cookies `expires` cannot be converted to a valid Date instance');
         }
         return expires;
     };
@@ -1346,7 +1524,7 @@
                 is_key = true;
             }
         } catch (e) {
-            console.error('SSweb cookies could not decode cookie with key "' + key + '"', e);
+            console.error('sw cookies could not decode cookie with key "' + key + '"', e);
         }
         return is_key ? {
             'key': decodedKey,
@@ -1366,10 +1544,10 @@
     };
     _cookies.enabled = _cookies._areEnabled();
     if (!_cookies.enabled) {
-        console.info('SSweb: Browser/client does not support cookies');
+        console.info('sw: Browser/client does not support cookies');
     }
     if (!(window.localStorage || false)) {
-        console.info('SSweb: Browser/client does not support localStorage');
+        console.info('sw: Browser/client does not support localStorage');
     }
     var _storage = function(key, value) {
         if (!_storage.db) {
@@ -1392,7 +1570,7 @@
                 value = '[=UNDEFINED]';
                 _storage.db.setItem(key, value);
                 return true;
-            } else if (typeof value !== 'string' && !SSweb.isFunction(value)) {
+            } else if (typeof value !== 'string' && !sw.isFunction(value)) {
                 try {
                     _storage.db.setItem(key, '[=JSON]' + JSON.stringify(value));
                     return true;
@@ -1404,7 +1582,7 @@
                 }
             }
         }
-        console.info('SSweb storage `value` types does not support');
+        console.info('sw storage `value` types does not support');
         return false;
     };
     _storage.get = function(key) {
@@ -1438,11 +1616,12 @@
         return false;
     };
 
-    SSweb.extend({
+    sw.extend({
         client: _client,
         cookies: _cookies,
         storage: _storage
     });
+    var SSweb = sw;
     if (typeof module === 'object' && module && typeof module.exports === 'object') {
         module.exports = SSweb;
     } else if (typeof define === 'function' && define.amd) {
@@ -1450,6 +1629,6 @@
             return SSweb;
         });
     } else {
-        window.SSweb = window.sw = SSweb;
+        window.SSweb = window.sw = sw;
     }
-})(window);
+})(window || false);
