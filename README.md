@@ -92,3 +92,10 @@ Query扩展使用JQ Sizzle 选择器开源库，实现了基本的DOM操作(Attr
 
 sw([DomElement|QuerySelector]).function([parms]) 或 sw.function([parms]) 常用DOM操作
 
+
+## ssweb.timerHandler扩展 定时器插件支持动态注册管理
+
+timerHandler 支持 IE7+、Firefox、Safari、Chrome和Opera
+
+timerHandler bindDom 需要IE9/IE9+、Firefox、Safari、Chrome和Opera支持DOM2级事件处理的浏览器
+详见：jQuery/Zepto timerHandler  https://github.com/ygzhang-cn/timerHandler
