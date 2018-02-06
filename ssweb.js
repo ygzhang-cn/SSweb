@@ -21,17 +21,24 @@
     window.console = window.console || { log: function() {}, debug: function() {}, info: function() {}, warn: function() {}, error: function() {} };
     var sw = function(selector, context) {
             return new sw.fn.instance(selector, context);
-        },     
+        },
         _uuid = 0,
         _obj_types = {
-            '[object Array]': 'array',
+            '[object String]': 'string',
             '[object Boolean]': 'boolean',
-            '[object Date]': 'date',
-            '[object Function]': 'function',
+            '[object Undefined]': 'undefined',
             '[object Number]': 'number',
             '[object Object]': 'object',
+            '[object Error]': 'error',
+            '[object Function]': 'function',
+            '[object Date]': 'date',
+            '[object Array]': 'array',
             '[object RegExp]': 'regexp',
-            '[object String]': 'string'
+            '[object Null]': 'null',
+            '[object NodeList]': 'nodeList',
+            '[object Arguments]': 'arguments',
+            '[object Window]': 'window',
+            '[object HTMLDocument]': 'document'
         },
         _run_args = {
             debug: 0,
@@ -537,6 +544,45 @@
 
         }
     }
+    //内置简易Dom选择器
+    var _domEle = function(v) {
+        if (sw.isDomElement(v)) {
+            return [v]
+        } else if (v.length && v.length > 0) {
+            if (sw.isjQuery(v) || sw.isZepto(v)) {
+                return v.toArray()
+            }
+        } else if (typeof v == 'string') {
+            v = v.trim().split(/\s+/g);
+            var el = [],
+                _el;
+            v.forEach(function(_s) {
+                switch (_s.charAt(0)) {
+                    case '#':
+                        _el = document.getElementById(_s.substring(1));
+                        if (_el) el.push(_el)
+                        break;
+                    case '.':
+                        if (document.getElementsByClassName) {
+                            return document.getElementsByClassName(_s.substring(1));
+                        } else {
+                            var a = document.getElementsByTagName('*'),
+                                reg = new RegExp('\\b' + _s.substring(1) + '\\b', 'g');
+                            for (var i = 0; i < a.length; i++) {
+                                if (a[i].className && reg.test(a[i].className)) {
+                                    el.push(a[i]);
+                                }
+                            }
+                        }
+                        break;
+                    default:
+                        el = document.getElementsByTagName(_s)
+                }
+            });
+            return el;
+        }
+        return [];
+    };
     sw.fn = sw.prototype = {
         SSweb: '1.0.3',
         constructor: SSweb,
@@ -553,8 +599,11 @@
             this.context = context;
             this.length = 0;
             var type = sw.type(selector);
-            if (type == 'function') {
+            if (selector instanceof SSweb) {
+                return selector;
+            } else if (type == 'function') {
                 sw.domReady(selector);
+                return this;
             } else if (type == 'array') {
                 for (var i = 0; i < selector.length; i++) { //遍历元素集合，并把所有元素填入到当前实例数组中
                     if (sw.isDomElement(selector[i])) {
@@ -562,21 +611,26 @@
                         this.length++;
                     }
                 }
-            } else if (type === "string") { //如果选择符是字符串
-                if(sw.query){
-                    var e = sw.query(selector, context);
-                    //获取指定名称的元素
-                    for (var i = 0; i < e.length; i++) { //遍历元素集合，并把所有元素填入到当前实例数组中
-                        this[i] = e[i];
-                    }
-                    this.length = e.length; //设置实例的length属性，即定义包含的元素个数  
-                }else{
-                    console.warn('SSweb query not loaded')
-                }          
+                return this;
             }
+            var e = [];
+            if (type === "string") { //如果选择符是字符串                
+                if (sw.query) {
+                    e = sw.query(selector, context);
+                } else {
+                    e = _domEle(selector)
+                }
+            } else if (sw.isjQuery(selector) || sw.isZepto(selector)) {
+                e = selector.toArray(); //支持第三方扩展库选择器
+            }
+            //获取指定名称的元素
+            for (var i = 0; i < e.length; i++) { //遍历元素集合，并把所有元素填入到当前实例数组中
+                this[i] = e[i];
+            }
+            this.length = e.length; //设置实例的length属性，即定义包含的元素个数
             return this; //返回当前实例
         },
-        size: function() { return this.length;},
+        size: function() { return this.length; },
         toArray: function() {
             return Array.prototype.slice.call(this);
         }
@@ -836,6 +890,14 @@
             }
             return false;
         },
+        isLikeArray: function(v) {
+            var length = !!v && 'length' in v && v.length || 0,
+                type = this.type(v);
+            return 'function' != type && !sw.isWindow(v) && (
+                'array' == type || length === 0 ||
+                (typeof length == 'number' && length > 0 && (length - 1) in v)
+            )
+        },
         //是否是一个纯粹的对象 方法暂没有完美方式
         isPlainObject: function(v) {
             if (Object.prototype.toString.call(v) === '[object Object]' && v.constructor === Object && !hasOwnProperty.call(v, 'constructor')) {
@@ -846,7 +908,7 @@
             return false;
         },
         //是否是SSweb对象
-        isSSweb:function(v){
+        isSSweb: function(v) {
             if (typeof SSweb === 'undefined') {
                 return false;
             } else {
@@ -1308,7 +1370,7 @@
         if (is.ie) {
             is.ie = parseInt((is.ie || 6), 10);
             if (browser.hasOwnProperty('isIE' + is.ie)) {
-                browser['isIE' + is.ie] = true;
+                browser['isIE' + is.ie] = 1;
             }
         }
         var touchSupport = 'ontouchend' in document ? true : false;

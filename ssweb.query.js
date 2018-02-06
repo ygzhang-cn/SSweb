@@ -2256,7 +2256,7 @@
     }
 
     // EXPOSE
-    var _sizzle = window.Sizzle||null;
+    var _sizzle = window.Sizzle || null;
 
     Sizzle.noConflict = function() {
         if (window.Sizzle === Sizzle) {
@@ -2320,6 +2320,47 @@
             }
         };
     var _formDomType = '+|hidden|button|submit|reset|text|textarea|checkbox|radio|password|image|search|number|tel|url|date|time|datetime|datetime-local|month|week|email|color|range|';
+    var _getEvents = function(e, s, fn, useCapture) {
+        var list = [];
+        if (typeof e != 'string' || e == '') {
+            return list;
+        }
+        if (sw.isFunction(s)) {
+            useCapture = fn || false;
+            fn = s;
+            s = '';
+        }
+        if (sw.isFunction(fn) && typeof s == 'string' && s !== '') {
+            var _fn = fn;
+            fn = function(event) {
+                // 验证子选择器所匹配的nodeList中是否包含当前事件源 或 事件源的父级
+                // 注意: 这个方法为包装函数,此处的this为触发事件的Element
+                event = event || window.event;
+                var target = event.target || false;
+                while (target && target !== this) {
+                    if (sw(s, this).toArray().indexOf(target) !== -1) {
+                        _fn.apply(target, arguments);
+                        break;
+                    }
+                    target = target.parentNode || false;
+                }
+            };
+        }
+        var vSplit, eSplit = e.trim().split(' ');;
+        eSplit.forEach(function(v) {
+            if (v != '') {
+                vSplit = v.split('.');
+                list.push({
+                    event: vSplit[0],
+                    scope: vSplit[1] || undefined,
+                    selector: s || undefined,
+                    fn: fn || undefined,
+                    seCapture: useCapture || false
+                })
+            }
+        })
+        return list;
+    };
     sw.fn.extend({
         eq: function(index) {
             if (sw.isDomElement(this)) {
@@ -2543,43 +2584,45 @@
         hide: function(fn) {
             return this.style('display', 'none', fn);
         },
-        on: function(e, fn) {
-            e = sw.trim(e).split(' ');
-            if (this.length > 0 && e !== '' && e !== null && sw.isFunction(fn)) {
+        on: function(e, s, fn, seCapture) {
+            var elist = _getEvents(e, s, fn, seCapture);
+            if (this.length > 0 && elist.length > 0) {
                 this.each(function(s) {
                     if (sw.isDomElement(s)) {
-                        e.forEach(function(_e) {
-                            if (s.addEventListener) {
-                                s.addEventListener(_e, fn, false);
-                            } else if (s.attachEvent) {
-                                s.attachEvent("on" + _e, fn);
-                            } else {
-                                s["on" + _e] = fn;
+                        elist.forEach(function(_e) {
+                            if (sw.isFunction(_e.fn)) {
+                                if (s.addEventListener) {
+                                    s.addEventListener(_e.event, _e.fn, false);
+                                } else if (s.attachEvent) {
+                                    s.attachEvent("on" + _e.event, _e.fn);
+                                } else {
+                                    s["on" + _e.event] = fn;
+                                }
+                                //缓存节点事件绑定关系
+                                _runDataSet(s, 'event', _e.event, _e)
                             }
-                            //缓存节点事件绑定关系
-                            _runDataSet(s, 'event', _e, fn)
                         });
                     }
                 });
             }
             return this;
         },
-        off: function(e, fn) {
-            e = sw.trim(e).split(' ');
-            if (this.length > 0 && e !== '' && e !== null) {
+        off: function(e, s, fn) {
+            var elist = _getEvents(e, s, fn);
+            if (this.length > 0 && elist.length>0) {
                 var fns;
                 this.each(function(s) {
                     if (sw.isDomElement(s)) {
-                        e.forEach(function(_e) {
-                            fns = sw.isFunction(fn) ? [fn] : (_runDataGet(s, 'event', _e) || []);
+                        elist.forEach(function(_e) {
+                            fns = sw.isFunction(_e.fn) ? [_e.fn] : (_runDataGet(s, 'event', _e.event) || []);
                             fns.forEach(function(_fn) {
-                                _runDataRm(s, 'event', _e, _fn);
+                                _runDataRm(s, 'event', _e.event, _fn);
                                 if (s.removeEventListener) {
-                                    s.removeEventListener(_e, _fn, false);
+                                    s.removeEventListener(_e.event, _fn, false);
                                 } else if (s.detachEvent) {
-                                    s.detachEvent("on" + _e, _fn);
+                                    s.detachEvent("on" + _e.event, _fn);
                                 } else {
-                                    s["on" + _e] = null;
+                                    s["on" + _e.event] = null;
                                 }
                             })
                         });
@@ -2605,8 +2648,8 @@
                 '_frameborder': 'frameBorder',
                 '_contenteditable': 'contentEditable'
             };
-            if ((sw.client.browser.isIE6 || sw.client.browser.isIE7) && ieFix['_'+n]) {
-                n = ieFix['_'+n];
+            if ((sw.client.browser.isIE6 || sw.client.browser.isIE7) && ieFix['_' + n]) {
+                n = ieFix['_' + n];
             }
             var t = sw.type(v);
             if (v === null) { //删除                
