@@ -777,7 +777,7 @@
             var reg = /^(-|\+)?\d+$/;
             return reg.test(v);
         },
-        isFloat: function(_v) {
+        isFloat: function(v) {
             var reg = /^(-|\+)?\d+\.\d*$/;
             return reg.test(v);
         },
